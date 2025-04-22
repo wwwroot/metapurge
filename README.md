@@ -11,7 +11,7 @@ Professional image metadata cleaner with advanced features for digital security 
 ## 🌟 Key Features
 - 🚫 Remove EXIF/IPTC/XMP metadata
 - 🔍 Detect and clean AI-generated content markers
-- 📸 Support multiple formats (JPEG, PNG, WebP)
+- 📸 Support only formats (JPG, JPEG)
 - 🛡️ Digital source type sanitization
 - ✏️ Custom credit/copyright watermarking
 - 🖥️ Real-time image preview
