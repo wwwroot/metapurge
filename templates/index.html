@@ -3,173 +3,46 @@
 <head>
     <title>MetaPurge - Intelligent Image Sanitizer</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #2196F3;
-            --secondary: #607D8B;
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Poppins', sans-serif;
-            max-width: 800px;
-            margin: 40px auto;
-            padding: 30px;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-        }
-
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-
-        h2 {
-            color: var(--primary);
-            text-align: center;
-            margin-bottom: 30px;
-            font-weight: 600;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-            width: 100%;
-        }
-
-        input[type="text"] {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: all 0.3s;
-            box-sizing: border-box;
-        }
-
-        input[type="text"]:focus {
-            border-color: var(--primary);
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(33,150,243,0.2);
-        }
-
-        .drop-zone {
-            border: 3px dashed var(--secondary);
-            padding: 40px 20px;
-            text-align: center;
-            margin: 25px 0;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.3s;
-            background: #f8f9fa;
-        }
-
-        .drop-zone:hover {
-            border-color: var(--primary);
-            background: rgba(33,150,243,0.05);
-        }
-
-        .drop-zone p {
-            color: var(--secondary);
-            margin: 0;
-            font-size: 18px;
-        }
-
-        button[type="submit"] {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 15px 40px;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.3s;
-            width: 100%;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        button[type="submit"]:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(33,150,243,0.3);
-        }
-
-        #preview {
-            max-width: 100%;
-            border-radius: 8px;
-            border: 3px solid #e0e0e0;
-            margin-top: 25px;
-            display: none;
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            margin: 20px 0;
-            color: var(--secondary);
-        }
-
-        .checkbox-group {
-            margin: 15px 0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            accent-color: var(--primary);
-        }
-
-        .footer-credit {
-            text-align: center;
-            margin-top: 30px;
-            padding-top: 15px;
-            border-top: 1px solid #e0e0e0;
-            color: var(--secondary);
-            font-size: 14px;
-        }
-
-        .footer-credit a {
-            color: var(--primary);
-            text-decoration: none;
-            transition: all 0.3s;
-        }
-
-        .footer-credit a:hover {
-            text-decoration: underline;
-            opacity: 0.8;
-        }
-
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" type="text/css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="description" content="MetaPurge is an intelligent image sanitizer that removes unnecessary metadata from your images.">
 </head>
 <body>
     <div class="container">
         <h2>🖼️ MetaPurge - Intelligent Image Sanitizer</h2>
         
         <form method="post" enctype="multipart/form-data" id="uploadForm">
-            <div class="form-group">
-                <input type="text" name="credit" placeholder="Enter Credit/Copyright (example: John Doe)" id="creditInput">
+            <div class="upload-section">
+                <div class="form-group">
+                    <input type="text" name="credit" placeholder="Enter Credit/Artist (example: John Doe)" id="creditInput">
+                </div>
+                
+                <div class="checkbox-group">
+                    <input type="checkbox" name="remove_digital" checked id="removeDigital">
+                    <label for="removeDigital">Delete Digital Source Metadata</label>
+                </div>
+
+                <div class="toolbar">
+                    <button type="button" onclick="removeAllFiles()" class="remove-all-btn">🗑️ Remove All</button>
+                </div>
+
+                <div class="drop-zone" id="dropZone">
+                    <p>📥 Drag & drop images here or click to select (Max 20 files)</p>
+                    <input type="file" id="fileInput" name="images" accept="image/*" multiple hidden>
+                </div>
+            </div>
+
+            <div class="preview-grid" id="previewGrid"></div>
+
+            <div class="loading" id="loading">
+                <div class="loader"></div>
+                <p>Processing <span id="processedCount">0</span> of <span id="totalCount">0</span> images</p>
+                <progress id="progressBar" value="0" max="100"></progress>
             </div>
             
-            <div class="checkbox-group">
-                <input type="checkbox" name="remove_digital" checked id="removeDigital">
-                <label for="removeDigital">Delete Digital Source Metadata</label>
-            </div>
-
-            <div class="drop-zone" onclick="document.getElementById('fileInput').click()">
-                <p>📥 Click or drag and drop the image here</p>
-                <input type="file" id="fileInput" name="image" accept="image/*" hidden>
-            </div>
-
-            <img id="preview">
-            <div class="loading" id="loading">⏳ Processing images...</div>
-            <button type="submit">🚀 Process & Download Now!</button>
+            
+            <button type="submit">🚀 Process All & Download ZIP</button>
         </form>
         <footer class="footer-credit">
             <p>© 2025 MetaPurge | <a href="https://github.com/wwwroot" target="_blank" rel="noopener noreferrer"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align: middle;"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg> Aji</a></p>
@@ -178,71 +51,146 @@
     </div>
 
     <script>
-    // Preview Image
     const fileInput = document.getElementById('fileInput');
+    const previewGrid = document.getElementById('previewGrid');
+    const creditInput = document.getElementById('creditInput');
     const preview = document.getElementById('preview');
     const loading = document.getElementById('loading');
     const form = document.getElementById('uploadForm');
     const dropZone = document.querySelector('.drop-zone');
+    const formatNotice = document.getElementById('formatNotice');
 
-    // Handle file selection
-    fileInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            preview.style.display = 'block';
+    const progressBar = document.getElementById('progressBar');
+    const processedCount = document.getElementById('processedCount');
+    const totalCount = document.getElementById('totalCount');
+    let files = [];
+
+        function createPreview(file) {
+            const fileId = Math.random().toString(36).substr(2, 9);
+            file.id = fileId;
+            
             const reader = new FileReader();
-            reader.onload = function(event) {
-                preview.src = event.target.result;
+            reader.onload = function(e) {
+                const previewItem = document.createElement('div');
+                previewItem.className = 'preview-item';
+                previewItem.dataset.fileid = fileId;
+                
+                previewItem.innerHTML = `
+                    <img class="preview-image" src="${e.target.result}" alt="${file.name}">
+                    <button class="remove-btn" onclick="removeFile('${fileId}')">×</button>
+                    <div class="processing-status">Pending</div>
+                `;
+                
+                previewGrid.appendChild(previewItem);
             }
             reader.readAsDataURL(file);
         }
-    });
 
-    // Handle form submission
-    form.addEventListener('submit', function(e) {
-        if (!fileInput.files.length) {
+        function updateFileStatus(filename, status) {
+            document.querySelectorAll('.preview-item').forEach(item => {
+                if (item.querySelector('img').alt === filename) {
+                    item.querySelector('.processing-status').textContent = status;
+                }
+            });
+        }
+
+        function removeAllFiles() {
+            files = [];
+            previewGrid.innerHTML = '';
+            updateCount();
+        }
+
+        function removeFile(fileId) {
+            files = files.filter(f => f.id !== fileId);
+            document.querySelector(`[data-fileid="${fileId}"]`).remove();
+            updateCount();
+        }
+
+        function updateCount() {
+            totalCount.textContent = files.length;
+            progressBar.max = files.length;
+            progressBar.value = 0;
+            if(files.length === 0) {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        fileInput.addEventListener('change', function(e) {
+            files = Array.from(e.target.files).slice(0, 20);
+            previewGrid.innerHTML = '';
+            files.forEach(createPreview);
+            updateCount();
+        });
+
+        function handleDrop(e) {
             e.preventDefault();
-            alert('Please select an image first!');
-            return;
+            const newFiles = Array.from(e.dataTransfer.files).slice(0, 20 - files.length);
+            files = [...files, ...newFiles].slice(0, 20);
+            previewGrid.innerHTML = '';
+            files.forEach(createPreview);
+            updateCount();
+            dropZone.style.borderColor = '#607D8B';
         }
-        loading.style.display = 'block';
-        preview.style.display = 'none';
-    });
 
-    // Drag and drop handlers
-    function handleDrop(e) {
-        e.preventDefault();
-        const dt = e.dataTransfer;
-        const files = dt.files;
-        
-        if (files.length > 0) {
-            // Update file input
-            const dataTransfer = new DataTransfer();
-            dataTransfer.items.add(files[0]);
-            fileInput.files = dataTransfer.files;
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = '#2196F3';
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.style.borderColor = '#607D8B';
+        });
+
+        dropZone.addEventListener('drop', handleDrop);
+
+        // Form submission
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
             
-            // Trigger preview
-            const event = new Event('change');
-            fileInput.dispatchEvent(event);
-        }
-        
-        // Update visual
-        dropZone.style.borderColor = getComputedStyle(document.documentElement)
-            .getPropertyValue('--secondary');
-    }
+            if(files.length === 0) {
+                alert('Please select at least one image!');
+                return;
+            }           
 
-    dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropZone.style.borderColor = getComputedStyle(document.documentElement)
-            .getPropertyValue('--primary');
-    });
+            const formData = new FormData();
+            files.forEach(file => {
+                formData.append('images', file);
+                updateFileStatus(file.name, 'Processing...'); 
+            });
 
-    dropZone.addEventListener('dragleave', () => {
-        dropZone.style.borderColor = getComputedStyle(document.documentElement)
-            .getPropertyValue('--secondary');
-    });
+            formData.append('credit', creditInput.value);
+            if(document.getElementById('removeDigital').checked) {
+                formData.append('remove_digital', 'on');
+            }
 
-    dropZone.addEventListener('drop', handleDrop);
+            try {
+                document.getElementById('loading').style.display = 'block';
+                progressBar.value = 0;
+                
+                const response = await fetch('/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if(!response.ok) throw new Error(await response.text());
+
+                const blob = await response.blob();
+                files.forEach(file => updateFileStatus(file.name, 'Done ✅'));
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'processed_images.zip';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                
+            } catch (error) {
+                files.forEach(file => updateFileStatus(file.name, 'Error ❌'));
+                alert('Error: ' + error.message);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        });
 </script>
 </body>
 </html>
